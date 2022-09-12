@@ -1,7 +1,7 @@
 #ifndef LINE_TRACK
 #define LINE_TRACK
-#include "Chassis.h"
-
+#include<commonIO.h>
+//#include "Chassis.h"
 class LineTrack{
     public: 
         LineTrack(int,float,float,float);
@@ -35,6 +35,6 @@ class LineTrack{
         float Ki;
         float Kd; 
         void upDateADC();
-        float getError();
+        float getFix();
 };
 #endif

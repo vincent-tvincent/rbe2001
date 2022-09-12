@@ -12,9 +12,4 @@ void setup() {
 
 
 void loop() {
-  Serial.print(analogRead(PIN_A0));
-  Serial.print(" ");
-  Serial.println(analogRead(PIN_A2));
-  Serial.println(analogRead(PIN_A0) - analogRead(PIN_A2));
-  delay(500);
 }

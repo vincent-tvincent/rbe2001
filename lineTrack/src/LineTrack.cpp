@@ -36,8 +36,8 @@ void LineTrack:: upDateADC(){
 
 void LineTrack::track(float speed){
     upDateADC();
-    int rightSpeed = speed + getError();
-    int leftSpeed = speed - getError();
+    int rightSpeed = speed * (1 + getFix());
+    int leftSpeed = speed * (1 - getFix());
     chassis.setWheelSpeeds(rightSpeed,leftSpeed);
 }
 bool LineTrack::isCross(){
@@ -48,9 +48,10 @@ bool LineTrack::isCross(){
     return onTrack0 && onTrack1 && onTrack2; 
 }
 
-float LineTrack::getError(){
+float LineTrack::getFix(){
     error = (ADC_L0 - ADC_R0) * W0 + (ADC_L1 - ADC_R1) * W1 + (ADC_L2 - ADC_R2) * W2;
-    float Pout = error * Kp; 
+    if(error < 10){error = 0;}
+    float Pout = (error/1023) * Kp; 
     //float Iout = 0;
     //float Dout = (error - pError) / dt * Ki;  
     //pError = error;
