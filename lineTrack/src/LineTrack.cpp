@@ -9,6 +9,8 @@ LineTrack::LineTrack(int lineADC, float kp, float ki, float kd){
     l2 = PIN_A6;
     r2 = PIN_A7;
     LineADC = lineADC; 
+    error = 0;
+    pError = 0;
     ADC_L0 = 0;
     ADC_R0 = 0; 
     ADC_L1 = 0;
@@ -43,18 +45,26 @@ void LineTrack::track(float speed){
 bool LineTrack::isCross(){
     upDateADC();
     bool onTrack0 = ADC_L0 >= LineADC && ADC_R0 >= LineADC; 
-    bool onTrack1 = ADC_L1 >= LineADC && ADC_R1 >= LineADC; 
-    bool onTrack2 = ADC_L2 >= LineADC && ADC_R2 >= LineADC; 
-    return onTrack0 && onTrack1 && onTrack2; 
+    bool onTrack1 = ADC_L1 >= LineADC && ADC_R1 >= LineADC;  
+    Serial.print("L1: ");
+    Serial.print(ADC_L1);
+    Serial.print("R1: ");
+    Serial.println(ADC_R1);
+    Serial.println();
+    return onTrack0 && onTrack1; 
 }
 
 float LineTrack::getFix(){
-    error = (ADC_L0 - ADC_R0) * W0 + (ADC_L1 - ADC_R1) * W1 + (ADC_L2 - ADC_R2) * W2;
-    if(error < 10){error = 0;}
+    error = ADC_R0 - ADC_L0;
+    if(error*error < 52 * 52){error = 0;}
     float Pout = (error/1023) * Kp; 
     //float Iout = 0;
-    //float Dout = (error - pError) / dt * Ki;  
-    //pError = error;
-    Serial.print(error);
-    return Pout;
+    float Dout = ((error - pError)/1023) * Ki;  
+    pError = error;
+    //Serial.println(error);
+    //Serial.print("D: ");
+    //Serial.println(Dout);
+    //Serial.print("out: ");
+    //Serial.println(Pout + Dout);
+    return Pout + Dout;
 }

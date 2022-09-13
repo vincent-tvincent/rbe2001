@@ -27,7 +27,7 @@ class LineTrack{
         int ADC_R2;
         //float dt;
         float error; 
-        //float pError;
+        float pError;
         float W0; 
         float W1; 
         float W2;
