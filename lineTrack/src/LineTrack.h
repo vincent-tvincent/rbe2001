@@ -10,7 +10,8 @@ class LineTrack{
         void track(float); // normal line track
         float bpTrack(float,float); // line track with backproperation 
         bool isCross();
-        void lineTrackFor(float,float);
+        bool onTrack();
+        void trackFor(float,float);
     private: 
         int l0; 
         int r0; 
@@ -25,15 +26,16 @@ class LineTrack{
         int ADC_R1;
         int ADC_L2;
         int ADC_R2;
-        //float dt;
         float error; 
-        float pError;
+        float pError;//previous error
+        float iError;// sum of errors, perform the integeral for I peremeter
         float W0; 
         float W1; 
         float W2;
         float Kp; 
         float Ki;
         float Kd; 
+        bool onTrack(int,int);
         void upDateADC();
         float getFix();
 };
