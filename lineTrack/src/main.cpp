@@ -25,6 +25,6 @@ void loop() {
       chassis.setTwist(0,turnSpeed);
       notOnTrack = !Track->onTrack();
     }
-    Track->trackFor(speed,25);
+    Track->trackFor(speed,18);
     while(true);
 }
