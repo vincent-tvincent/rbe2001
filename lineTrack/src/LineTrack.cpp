@@ -1,6 +1,6 @@
 #include "LineTrack.h"
 
-LineTrack::LineTrack(int lineADC, float kp, float ki,float kd){
+LineTrack::LineTrack(int lineADC, float kp, float kd){
     l0 = PIN_A0; 
     r0 = PIN_A2;
     l1 = PIN_A3;
@@ -10,7 +10,6 @@ LineTrack::LineTrack(int lineADC, float kp, float ki,float kd){
     LineADC = lineADC; 
     error = 0;
     pError = 0;
-    iError = 0;
     ADC_L0 = 0;
     ADC_R0 = 0; 
     ADC_L1 = 0;
@@ -18,7 +17,6 @@ LineTrack::LineTrack(int lineADC, float kp, float ki,float kd){
     ADC_L2 = 0;
     ADC_R2 = 0;
     Kp = kp;
-    Ki = ki;
     Kd = kd;
     W0 = 1;
     W1 = 0; 
@@ -42,12 +40,33 @@ void LineTrack::track(float speed){
     int leftSpeed = speed * (1 - getFix());
     chassis.setWheelSpeeds(rightSpeed,leftSpeed);
 }
+
+void LineTrack::trackFor(float speed,float distance){
+    int start = (chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2;
+    int end = distance / wheelPeremeter * encoderTickPerSecond;
+    while((chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2 - start < end){
+        track(speed);
+    }
+    chassis.setWheelSpeeds(0,0);
+}
+
+void LineTrack::turnBack(){
+    upDateADC();
+    chassis.turnFor(100,180,true);
+    while(!onTrack()){
+        chassis.setTwist(0,100);
+    }
+    chassis.setTwist(0,0);
+}
 bool LineTrack::isCross(){
+    upDateADC();
      return onTrack(ADC_L0,ADC_R0) && onTrack(ADC_L2,ADC_R2);
 }
-bool LineTrack::onTrack(){return onTrack(ADC_L0,ADC_R0);}
-bool LineTrack::onTrack(int lADC, int rADC){
+bool LineTrack::onTrack(){
     upDateADC();
+    return onTrack(ADC_L0,ADC_R0);
+}
+bool LineTrack::onTrack(int lADC, int rADC){
     return lADC >= LineADC && rADC >= LineADC;
 }
 
@@ -55,9 +74,7 @@ float LineTrack::getFix(){
     error = ADC_R0 - ADC_L0;
     if(error * error < 52 * 52){error = 0;}
     float Pout = (error/1023) * Kp; 
-    float Iout = (iError/1023) * Ki;
     float Dout = ((error - pError)/1023) * Kd;  
     pError = error;
-    iError += error;
-    return Pout + Iout + Dout;
+    return Pout + Dout;
 }

@@ -1,5 +1,7 @@
 #ifndef COMIO
 #define COMIO
 #include <Chassis.h>
-#include <Rangefinder.h>
+const float wheelPeremeter = 7 * PI;
+const int encoderTickPerSecond = 1440;
+const float carRadius = 7.62;
 #endif 

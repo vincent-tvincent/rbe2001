@@ -5,29 +5,26 @@ LineTrack* Track;
 void setup() {
   Serial.begin(9600);
   chassis.init();
-  Track = new LineTrack(750,0.5,0,0.3);
+  Track = new LineTrack(750,1,1);
 }
 bool onCross = false;
+bool start = true;
+int speed = 35;
+int turnSpeed = 180;
 void loop() {
-    onCross = Track->isCross();
-    if(onCross){
-      chassis.setWheelSpeeds(0,0);
-      chassis.driveFor(7.62,10,true);
-      Serial.print(!Track->onTrack());
-      do{
-        chassis.setTwist(0,30);
-      }while(!Track->onTrack());
-
-      chassis.setTwist(0,0);
-    }else{
-      Track->track(10);
+    if(start){Track->turnBack(); start = false;}
+    while(!onCross){
+      Track->track(speed);
+      onCross = Track->isCross();
     }
-    // delay(500);
-    // chassis.driveFor(7.62,10,true);
-    // delay(1000);
-    // chassis.turnFor(40,90,true);
-    // delay(1000);
-    // while(!Track->onTrack()){chassis.setTwist(0,30);}
-    // chassis.setTwist(0,0);
-    // while(true){}
+    chassis.setWheelSpeeds(0,0);
+    chassis.driveFor(carRadius,speed,true);
+    chassis.turnFor(speed,turnSpeed,true);
+    bool notOnTrack = !Track->onTrack();
+    while(notOnTrack){
+      chassis.setTwist(0,turnSpeed);
+      notOnTrack = !Track->onTrack();
+    }
+    Track->trackFor(speed,25);
+    while(true);
 }

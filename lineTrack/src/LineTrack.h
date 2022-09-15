@@ -4,7 +4,7 @@
 //#include "Chassis.h"
 class LineTrack{
     public: 
-        LineTrack(int,float,float,float);
+        LineTrack(int,float,float);
         virtual ~LineTrack(); 
 
         void track(float); // normal line track
@@ -12,6 +12,7 @@ class LineTrack{
         bool isCross();
         bool onTrack();
         void trackFor(float,float);
+        void turnBack();
     private: 
         int l0; 
         int r0; 
@@ -28,12 +29,10 @@ class LineTrack{
         int ADC_R2;
         float error; 
         float pError;//previous error
-        float iError;// sum of errors, perform the integeral for I peremeter
         float W0; 
         float W1; 
         float W2;
         float Kp; 
-        float Ki;
         float Kd; 
         bool onTrack(int,int);
         void upDateADC();
