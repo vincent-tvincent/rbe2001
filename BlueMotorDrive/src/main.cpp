@@ -42,9 +42,5 @@ void loop()
   //   }
     
   // }
-
-  //Serial.println(motor.getPosition());
-  //delay(100);
-  //delay(100);
-  motor.setEffort(400);
+  motor.moveTo(540);
 }

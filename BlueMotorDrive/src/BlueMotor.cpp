@@ -49,7 +49,7 @@ void BlueMotor::reset()
 
 void BlueMotor::isrA()
 {
-    if(digitalRead(ENCA) && digitalRead(ENCB)){
+    if(digitalRead(ENCA) == digitalRead(ENCB)){
         count--;
     }else{
         count++;
@@ -58,7 +58,7 @@ void BlueMotor::isrA()
 
 void BlueMotor::isrB()
 {
-    if(digitalRead(ENCA) && digitalRead(ENCB)){
+    if(digitalRead(ENCA) == digitalRead(ENCB)){
         count++;
     }else{
         count--;
@@ -99,24 +99,26 @@ void BlueMotor::motorBreak()
 }
 
 void BlueMotor::stayAT(long target)
-{
-    float count = getPosition();
-    setEffort(motorEffort * getFix(count,target,Kp));
-}
+{}
 
 void BlueMotor::moveTo(long target)  
 {                                 
     float count = getPosition();
+    float prevCount = getPosition();
     while(abs(target - count) > tolerance){
-        setEffort(motorEffort * getFix(count,target,2));
-        //Serial.println(motorEffort * getFix(count,target,1));
+        Serial.println(motorEffort * getFix(count,prevCount,target,Kp,Ki));
+        setEffort(motorEffort * getFix(count,prevCount,target,Kp,Ki));
+        prevCount = count;
         count = getPosition();
         //delay(100);
     }
     motorBreak();
 }
 
-float BlueMotor::getFix(float count,float target,float Kp)
+float BlueMotor::getFix(float count,float prevCount,float target,float Kp,float Ki)
 {
-    return (target - count) / CPR * Kp;
+    int error = target - count;
+    if(error > 0 && error < 71) error = 71;
+    float fixValue = (error) / CPR * Kp + (count - prevCount) * Ki;
+    return fixValue;
 }
