@@ -1,30 +1,33 @@
 #include <Romi32U4.h>
 #include <LineTrack.h>
+#include <sonarApproach.h>
 Chassis chassis;
-LineTrack* Track;
+LineTrack Track(700,1,2);
+Rangefinder rangefinder(sonarEcho,sonarTrig);
+sonarApproach sonar(2.5,1.5);
 void setup() {
   Serial.begin(9600);
   chassis.init();
-  Track = new LineTrack(750,1,1);
+  rangefinder.init();
+  delay(50);
 }
 bool onCross = false;
 bool start = true;
-int speed = 35;
-int turnSpeed = 180;
+float speed = 20;
+float turnSpeed = 180;
+float targetDistanceFromWall = 12.7;
+float errorRange = 0.0;
 void loop() {
-    if(start){Track->turnBack(); start = false;}
-    while(!onCross){
-      Track->track(speed);
-      onCross = Track->isCross();
+  Track.switchTrack(turnSpeed); // turing back;
+  float distanceFromWall = sonar.getDistance();
+  while(distanceFromWall > targetDistanceFromWall){
+    if(Track.isCross()){
+      Track.trackFor(speed, carRadius);
+      Track.switchTrack(turnSpeed);
     }
-    chassis.setWheelSpeeds(0,0);
-    chassis.driveFor(carRadius,speed,true);
-    chassis.turnFor(speed,turnSpeed,true);
-    bool notOnTrack = !Track->onTrack();
-    while(notOnTrack){
-      chassis.setTwist(0,turnSpeed);
-      notOnTrack = !Track->onTrack();
-    }
-    Track->trackFor(speed,18);
-    while(true);
+    Track.track(sonar.getApproachingSpeed(targetDistanceFromWall,speed));
+    distanceFromWall = sonar.getDistance();
+  }
+  while(true);
+  //Track.track(sonar.getApproachingSpeed(targetDistanceFromWall,speed));
 }

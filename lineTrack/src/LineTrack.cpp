@@ -1,12 +1,7 @@
 #include "LineTrack.h"
 
 LineTrack::LineTrack(int lineADC, float kp, float kd){
-    l0 = PIN_A0; 
-    r0 = PIN_A2;
-    l1 = PIN_A3;
-    r1 = PIN_A4;
-    l2 = PIN_A6;
-    r2 = PIN_A8;
+    direction = 1;
     LineADC = lineADC; 
     error = 0;
     pError = 0;
@@ -36,8 +31,14 @@ void LineTrack:: upDateADC(){
 
 void LineTrack::track(float speed){
     upDateADC();
-    int rightSpeed = speed * (1 + getFix());
-    int leftSpeed = speed * (1 - getFix());
+    if(speed > 0){
+        direction = 1;
+    }else{
+        direction = -1;
+    }
+    //fix the speeds by the percentange of it self
+    float rightSpeed = speed * (1 + getFix());
+    float leftSpeed = speed * (1 - getFix());
     chassis.setWheelSpeeds(rightSpeed,leftSpeed);
 }
 
@@ -50,31 +51,39 @@ void LineTrack::trackFor(float speed,float distance){
     chassis.setWheelSpeeds(0,0);
 }
 
-void LineTrack::turnBack(){
-    upDateADC();
-    chassis.turnFor(100,180,true);
-    while(!onTrack()){
-        chassis.setTwist(0,100);
+void LineTrack::switchTrack(float turnSpeed){
+   upDateADC();
+    while(onTrack(ADC_L0,ADC_R0)) {
+        chassis.setTwist(0,turnSpeed);
+        upDateADC();
+    } 
+    while(!onTrack(ADC_L0,ADC_R0)){
+        chassis.setTwist(0,turnSpeed);
+        upDateADC();
     }
-    chassis.setTwist(0,0);
+    chassis.setMotorEfforts(0,0);
 }
+
 bool LineTrack::isCross(){
     upDateADC();
-     return onTrack(ADC_L0,ADC_R0) && onTrack(ADC_L2,ADC_R2);
+    return onTrack(ADC_L0,ADC_R0) && onTrack(ADC_L2,ADC_R2);
 }
+
 bool LineTrack::onTrack(){
     upDateADC();
     return onTrack(ADC_L0,ADC_R0);
 }
+
 bool LineTrack::onTrack(int lADC, int rADC){
+    Serial.println(lADC >= LineADC && rADC >= LineADC);
     return lADC >= LineADC && rADC >= LineADC;
 }
 
 float LineTrack::getFix(){
-    error = ADC_R0 - ADC_L0;
-    if(error * error < 52 * 52){error = 0;}
-    float Pout = (error/1023) * Kp; 
-    float Dout = ((error - pError)/1023) * Kd;  
+    error = (ADC_R0 - ADC_L0) * direction;// get error 
+    if(error * error < lineTrackerADCTolorance * lineTrackerADCTolorance){error = 0;}
+    float Pout = (error/1023) * Kp; // applying P control 
+    float Dout = ((error - pError)/1023) * Kd;  // applying D control
     pError = error;
-    return Pout + Dout;
+    return Pout + Dout; // generate output 
 }
