@@ -9,10 +9,8 @@ unsigned time = 0;
 
 
 BlueMotor::BlueMotor(){
-    setup();
     reset();
 }
-
 void BlueMotor::setup()
 {
     pinMode(PWMOutPin, OUTPUT);
@@ -46,6 +44,68 @@ void BlueMotor::reset()
     interrupts();
 }
 
+void BlueMotor::motorTest(){
+    int testNegative = false;
+    int testCount = 0;
+    delay(5000);
+    if(testCount < 2){
+        if(testNegative){
+        Serial.println("negative");
+        }else{
+        Serial.println("positive");
+        }
+        for(int i = 0; i < 5; i++){
+        reset();
+        delay(500);
+        Serial.print("test ");
+        Serial.print(i + 1);
+        Serial.println(" start");
+        bool encoderMove = getPosition();
+        int effort = 1; 
+        while(effort < 401 && !encoderMove){
+            if(testNegative){
+            setEffort(-effort);
+            }else{
+            setEffort(effort);
+            };
+            delay(100);
+            effort++;
+            encoderMove = getPosition();
+        }
+        delay(100);
+        motorBreak();
+        Serial.println("moving effort: ");
+        Serial.println(effort);
+        Serial.println();
+        delay(500);
+        }
+        testNegative = !testNegative;
+        testCount ++;
+    }else{
+        Serial.println("test finished");
+        while(true);
+    }
+}
+
+void BlueMotor::motorPlot(){
+    noInterrupts();
+    int currentPosition = 0;
+    int previousPosition = currentPosition;
+    int RPM = 0;
+    int actualEffort = 0;
+    int time = 0;
+    int startTime = millis();
+    interrupts();
+    for(int effort = 0; effort < motorEffort + 1; effort++){
+        currentPosition = getPosition();
+        actualEffort = setEffortWithoutDB(effort);
+        RPM = (currentPosition - previousPosition) * 600 / CPR;
+        noInterrupts();
+        time = millis() - startTime;
+        interrupts();
+        previousPosition = currentPosition;
+    }
+}
 
 void BlueMotor::isrA()
 {
@@ -67,6 +127,7 @@ void BlueMotor::isrB()
 
 void BlueMotor::setEffort(int effort)
 {
+    //Serial.println(effort);
     if (effort < 0)
     {
         setEffort(-effort, true);
@@ -92,6 +153,18 @@ void BlueMotor::setEffort(int effort, bool clockwise)
     OCR1C = constrain(effort, 0, 400);
 }
 
+int BlueMotor::setEffortWithoutDB(int effort){
+    
+    if(effort > 0){
+        effort += minMotorEffort;
+    }else if(effort < 0){
+        effort -= minMotorEffort;
+    }else{
+        effort = 0;
+    }
+    setEffort(effort);
+}
+
 void BlueMotor::motorBreak()
 {
     digitalWrite(IN1,LOW);
@@ -101,7 +174,7 @@ void BlueMotor::motorBreak()
 void BlueMotor::stayAT(long target)
 {}
 
-void BlueMotor::moveTo(long target)  
+void BlueMotor::moveTo(long target)   
 {                                 
     float count = getPosition();
     float prevCount = getPosition();
@@ -115,10 +188,10 @@ void BlueMotor::moveTo(long target)
     motorBreak();
 }
 
+
 float BlueMotor::getFix(float count,float prevCount,float target,float Kp,float Ki)
 {
     int error = target - count;
-    if(error > 0 && error < 71) error = 71;
     float fixValue = (error) / CPR * Kp + (count - prevCount) * Ki;
     return fixValue;
 }
