@@ -174,24 +174,45 @@ void BlueMotor::motorBreak()
 void BlueMotor::stayAT(long target)
 {}
 
-void BlueMotor::moveTo(long target)   
+void BlueMotor::moveTo(int target)   
 {                                 
     float count = getPosition();
     float prevCount = getPosition();
     while(abs(target - count) > tolerance){
-        Serial.println(motorEffort * getFix(count,prevCount,target,Kp,Ki));
-        setEffort(motorEffort * getFix(count,prevCount,target,Kp,Ki));
+        Serial.print("count: ");
+        Serial.println(count);
+        Serial.print("prevCount: ");
+        Serial.println(prevCount);
+        //Serial.println(motorEffort * getFix(count,prevCount,target,Kp,Ki,cw));
+        float fix = getFix(count,prevCount,target,Kp,Kd);
+        setEffort(motorEffort * fix);
+        Serial.print("output: ");
+        Serial.println(motorEffort * fix);
+        Serial.println();
         prevCount = count;
         count = getPosition();
-        //delay(100);
+        delay(50);
     }
     motorBreak();
 }
 
 
-float BlueMotor::getFix(float count,float prevCount,float target,float Kp,float Ki)
+float BlueMotor::getFix(float count,float prevCount,float target,float Kp,float Kd)
 {
-    int error = target - count;
-    float fixValue = (error) / CPR * Kp + (count - prevCount) * Ki;
+    float error = target - count;
+    Serial.print("error: ");
+    Serial.println(error);
+    float Pout = error / CPR * Kp;
+    Serial.print("Pout: ");
+    //Serial.print(error / CPR);
+    Serial.print(" ");
+    Serial.println(Pout);
+    float Dout = (count - prevCount) * Kd;
+    Serial.print("Dout");
+    Serial.println(Dout);
+    float fixValue = Pout + Dout;
+    Serial.print("fix value: ");
+    Serial.println(fixValue);
+    delay(100);
     return fixValue;
 }
