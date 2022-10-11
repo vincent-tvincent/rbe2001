@@ -8,6 +8,7 @@ class gripper{
     void init();
     void release();
     void close();
+    void hold();
     private: 
     int countToMs(int count);
     int start;

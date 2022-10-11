@@ -9,6 +9,8 @@ unsigned time = 0;
 
 
 BlueMotor::BlueMotor(){
+    error = 0;
+    pError = 0;
     reset();
 }
 void BlueMotor::setup()
@@ -159,7 +161,7 @@ int BlueMotor::setEffortWithoutDB(int effort){
         effort += minMotorEffort;
     }else if(effort < 0){
         effort -= minMotorEffort;
-    }else{
+    }else if(abs(effort) < minMotorEffort){
         effort = 0;
     }
     setEffort(effort);
@@ -177,19 +179,19 @@ void BlueMotor::stayAT(long target)
 void BlueMotor::moveTo(int target)   
 {                                 
     float count = getPosition();
-    float prevCount = getPosition();
+    //float prevCount = getPosition();
     while(abs(target - count) > tolerance){
         Serial.print("count: ");
         Serial.println(count);
-        Serial.print("prevCount: ");
-        Serial.println(prevCount);
+       // Serial.print("prevCount: ");
+        //Serial.println(prevCount);
         //Serial.println(motorEffort * getFix(count,prevCount,target,Kp,Ki,cw));
-        float fix = getFix(count,prevCount,target,Kp,Kd);
+        float fix = getFix(count,target,Kp,Kd);
         setEffortWithoutDB(motorEffort * fix);
         Serial.print("output: ");
         Serial.println(motorEffort * fix);
         Serial.println();
-        prevCount = count;
+        //prevCount = count;
         count = getPosition();
         delay(50);
     }
@@ -197,22 +199,59 @@ void BlueMotor::moveTo(int target)
 }
 
 
-float BlueMotor::getFix(float count,float prevCount,float target,float Kp,float Kd)
+float BlueMotor::getFix(float count,float target,float Kp,float Kd)
 {
-    float error = target - count;
+    error = target - count;
     Serial.print("error: ");
     Serial.println(error);
-    float Pout = error / CPR * Kp;
+    float Pout = error / (float)CPR * Kp;
     Serial.print("Pout: ");
-    //Serial.print(error / CPR);
+    Serial.print(error / CPR);
     Serial.print(" ");
     Serial.println(Pout);
-    float Dout = (count - prevCount) * Kd;
+    Serial.println("pError: ");
+    Serial.println(pError);
+    float Dout = (error - pError) / (float)CPR * Kd;
     Serial.print("Dout");
+    Serial.println(error - pError);
     Serial.println(Dout);
     float fixValue = Pout + Dout;
     Serial.print("fix value: ");
     Serial.println(fixValue);
-    delay(100);
+    pError = error;
+    //delay(100);
     return fixValue;
+}
+
+void BlueMotor:: toStartPosition(bool sensor, int effort){
+    while(!digitalRead(sensor)){
+        setEffortWithoutDB(effort);
+        Serial.println(digitalRead(sensor));
+    }
+    motorBreak();
+    reset();
+}
+
+void BlueMotor:: toStartPosition(){
+    setEffort(motorEffort);
+    Serial.println("function called");
+    delay(100);
+    int previousCount = 0;
+    int currentCount = getPosition();
+    Serial.print("previous: ");
+    Serial.println(previousCount);
+    Serial.print("now: ");
+    Serial.println(currentCount);
+    Serial.println("start");
+    do{
+        previousCount = currentCount;
+        delay(100);
+        currentCount = getPosition();
+    }while(currentCount != previousCount);
+    motorBreak();
+    reset();
+    moveTo(-liftMax + liftStart);
+    reset();
+    motorBreak();
+    Serial.println("done");
 }

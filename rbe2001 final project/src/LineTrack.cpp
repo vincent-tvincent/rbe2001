@@ -21,7 +21,7 @@ LineTrack::LineTrack(int lineADC, float kp, float kd){
 LineTrack::~LineTrack(){}
 
 void LineTrack::init(){
-    
+    chassis.init();
 }
 
 void LineTrack:: upDateADC(){
