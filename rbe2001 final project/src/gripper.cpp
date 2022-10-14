@@ -10,14 +10,15 @@ int gripper:: countToMs(int count){
 }
 void gripper:: init(){
     servo.setMinMaxMicroseconds(servoMin,servoMax);
+    close();
 }
 
 void gripper:: release(){
     servo.writeMicroseconds(countToMs(start));
     int currentCount = analogRead(servoEncoder);
-    while(start - currentCount > servoErrorTolerance){
+    while(abs(start - currentCount) > servoErrorTolerance){
         servo.writeMicroseconds(countToMs(start));
-        Serial.print("running: ");
+        Serial.println("running: ");
         currentCount = analogRead(servoEncoder);
     }
     Serial.println(analogRead(servoEncoder));
@@ -30,7 +31,7 @@ void gripper:: close(){
     while(gripping){
         servo.writeMicroseconds(countToMs(gripperEndEncoderCount));
         delay(50);
-        bool incomplete = gripperEndEncoderCount - analogRead(servoEncoder) > servoErrorTolerance;
+        bool incomplete = abs(gripperEndEncoderCount - analogRead(servoEncoder)) > gripperLockZone;
         Serial.println(analogRead(servoEncoder));
         for(stallCount = 0; stallCount <  stall + 1 && incomplete; stallCount++){
             stallCount++;
@@ -38,7 +39,7 @@ void gripper:: close(){
             servo.writeMicroseconds(countToMs(gripperEndEncoderCount));
             delay(50);
             Serial.println(analogRead(servoEncoder));
-            incomplete = gripperEndEncoderCount - analogRead(servoEncoder) > servoErrorTolerance;
+            incomplete = abs(gripperEndEncoderCount - analogRead(servoEncoder)) > gripperLockZone;
         }
         if(stallCount > stall){
             release();
@@ -56,4 +57,10 @@ void gripper:: close(){
 
 void gripper:: hold(){
     if(gripperEndEncoderCount - analogRead(servoEncoder) > servoErrorTolerance) servo.writeMicroseconds(countToMs(gripperEndEncoderCount));
+}
+
+void gripper:: closeTo(float percent){
+    int travelLength = gripperEndEncoderCount - gripperStartEncoderCount;
+    int writeValue = countToMs(start + (float)travelLength * percent);
+    servo.writeMicroseconds(writeValue);
 }

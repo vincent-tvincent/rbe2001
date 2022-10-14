@@ -5,7 +5,9 @@
 class sonarApproach{
     public: 
         sonarApproach(int Kp,int Kd);
+        void init();
         float getApproachingSpeed(float targetDistance,float maximumSpeed);// set the speed to appoporate value based on the target distance from the barrier and expected speed
+        float getPerpotionalApproachingSpeed(float targetDsitance,float maximumSpeed);
         float getDistance();// get distance which considered the offset length due to the position sonar monted
         float setStartDistance(); // get the distance when approaching start
     private: 

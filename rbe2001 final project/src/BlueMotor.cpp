@@ -20,6 +20,7 @@ void BlueMotor::setup()
     pinMode(IN1, OUTPUT);
     pinMode(ENCA, INPUT);
     pinMode(ENCB, INPUT);
+    pinMode(startSensorPin,INPUT);
     TCCR1A = 0xA8; //0b10101000; //gcl: added OCR1C for adding a third PWM on pin 11
     TCCR1B = 0x11; //0b00010001;
     ICR1 = 400;
@@ -177,27 +178,29 @@ void BlueMotor::stayAT(long target)
 {}
 
 void BlueMotor::moveTo(int target)   
-{                                 
-    float count = getPosition();
-    //float prevCount = getPosition();
-    while(abs(target - count) > tolerance){
+{ 
+    bool keepMove = true;
+    while(keepMove){
+        keepMove = move(target);
+    }
+}
+
+bool BlueMotor::move(int target){
+    bool keepMove = abs(target - count) > tolerance;
+    if(keepMove){
+        float count = getPosition();
         Serial.print("count: ");
         Serial.println(count);
-       // Serial.print("prevCount: ");
-        //Serial.println(prevCount);
-        //Serial.println(motorEffort * getFix(count,prevCount,target,Kp,Ki,cw));
         float fix = getFix(count,target,Kp,Kd);
         setEffortWithoutDB(motorEffort * fix);
         Serial.print("output: ");
         Serial.println(motorEffort * fix);
         Serial.println();
-        //prevCount = count;
-        count = getPosition();
-        delay(50);
+    }else{
+        motorBreak();
     }
-    motorBreak();
+    return keepMove;
 }
-
 
 float BlueMotor::getFix(float count,float target,float Kp,float Kd)
 {
@@ -223,17 +226,27 @@ float BlueMotor::getFix(float count,float target,float Kp,float Kd)
     return fixValue;
 }
 
-void BlueMotor:: toStartPosition(bool sensor, int effort){
-    while(!digitalRead(sensor)){
-        setEffortWithoutDB(effort);
-        Serial.println(digitalRead(sensor));
+void BlueMotor:: toStartPosition(int effort){
+    int positiveCount = 0;
+    while(positiveCount < 10){
+        Serial.print("zeroing: ");
+        setEffortWithoutDB(-effort);
+        Serial.print(digitalRead(sensorPin));
+        Serial.print(" ");
+        if(digitalRead(sensorPin)){
+            positiveCount ++;
+        }else{
+            positiveCount = 0;
+        }
+        Serial.println(positiveCount);
+        delay(10);
     }
     motorBreak();
     reset();
 }
 
 void BlueMotor:: toStartPosition(){
-    setEffort(motorEffort);
+    setEffort(minMotorEffort);
     Serial.println("function called");
     delay(100);
     int previousCount = 0;

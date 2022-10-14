@@ -8,7 +8,7 @@ public:
     int setEffortWithoutDB(int effort);
     void motorBreak();
     void moveTo(int position);
-    void moveTo(int position, bool cw);
+    bool move(int position);
     void stayAT(long position);
     long getPosition();
     void reset();
@@ -16,14 +16,15 @@ public:
     float getFix(float count,float target,float Kp,float Kd);
     void motorTest();
     void motorPlot();
-    void toStartPosition(bool sensor, int effort);
+    void toStartPosition(int effort);
     void toStartPosition();
 
 private:
-    long Kp = 2.5;
-    long Kd = 0.7;
+    long Kp = 5;
+    long Kd = 0.5;
     int error;
     int pError;
+    int sensorPin = startSensorPin;
     void setEffort(int effort, bool clockwise);
     static void isrA();
     static void isrB();

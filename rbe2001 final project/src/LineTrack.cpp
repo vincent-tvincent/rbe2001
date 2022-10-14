@@ -35,33 +35,43 @@ void LineTrack:: upDateADC(){
 
 void LineTrack::track(float speed){
     upDateADC();
-    if(speed > 0){
-        direction = 1;
+    if(speed < 0){
+        chassis.setWheelSpeeds(speed,speed);
     }else{
-        direction = -1;
+        //fix the speeds by the percentange of it self
+        float rightSpeed = speed * (1 + getFix());
+        float leftSpeed = speed * (1 - getFix());
+        chassis.setWheelSpeeds(rightSpeed,leftSpeed);
     }
-    //fix the speeds by the percentange of it self
-    float rightSpeed = speed * (1 + getFix());
-    float leftSpeed = speed * (1 - getFix());
-    chassis.setWheelSpeeds(rightSpeed,leftSpeed);
+}
+
+void LineTrack::trackSetStart(){
+    start = (chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2;
 }
 
 void LineTrack::trackFor(float speed,float distance){
     int start = (chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2;
-    int end = distance / wheelPeremeter * encoderTickPerSecond;
+    int end = distance / wheelDiameter * encoderTickPerSecond;
     while((chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2 - start < end){
         track(speed);
     }
     chassis.setWheelSpeeds(0,0);
 }
 
+void LineTrack::stop(){
+    chassis.setWheelSpeeds(0,0);
+}
 void LineTrack::switchTrack(float turnSpeed){
    upDateADC();
+
     while(onTrack(ADC_L0,ADC_R0)) {
+        Serial.println("go out");
         chassis.setTwist(0,turnSpeed);
         upDateADC();
-    } 
+    }
+    delay(100);
     while(!onTrack(ADC_L0,ADC_R0)){
+        Serial.println("go on");
         chassis.setTwist(0,turnSpeed);
         upDateADC();
     }
@@ -84,10 +94,33 @@ bool LineTrack::onTrack(int lADC, int rADC){
 }
 
 float LineTrack::getFix(){
-    error = (ADC_R0 - ADC_L0) * direction;// get error 
+    error = ADC_R0 - ADC_L0;// get error 
     if(error * error < lineTrackerADCTolorance * lineTrackerADCTolorance){error = 0;}
     float Pout = (error/1023) * Kp; // applying P control 
     float Dout = ((error - pError)/1023) * Kd;  // applying D control
     pError = error;
     return Pout + Dout; // generate output 
+}
+
+void LineTrack::travel(float speed,int turnSpeed, int* map){
+    int nextAction = 0;
+    while(map[nextAction] != Stop){
+        track(speed);
+        if(isCross()){
+            stop();
+            trackFor(speed,carRadius);
+            stop();
+            delay(100);
+            // if(map[nextAction] == toRight){
+            //     switchTrack(-turnSpeed);
+            //     track(speed);
+            // }else if(map[nextAction] == toLeft){
+            //     switchTrack(turnSpeed);
+            //     track(speed);
+            // }
+            // nextAction++;
+            while(true);
+        }
+    }
+    stop();
 }

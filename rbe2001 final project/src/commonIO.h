@@ -23,15 +23,16 @@ static const int ENCB = 1;
 const int CPR = 540;
 const int motorEffort = 400;
 const int minMotorEffort = 200;
-const int lift45degEncoderRead = 4300;
-const int lift25degEncoderRead = 4862;
-const int carryEncoderRead = 5000;
-const int liftMax = 9000;
-const int liftStart = 2000;
+const int lift45degEncoderRead = 4200;
+const int lift25degEncoderRead = 4800;
+const int carryEncoderRead = 3000;
+const int liftMax = 5000;
+const int liftStart = 0;
+const int startSensorPin = PIN_A1;
+const int startOffset = -2500;
 
 //sonar 
-const int startSensor = PIN_A1;
-const int sonarEcho = 11;
+const int sonarEcho = 2;
 const int sonarTrig = 12;
 
 //servo
@@ -41,13 +42,16 @@ const int servoMax = 2500;
 const int servoEncoder = PIN_A0;
 const int servoErrorTolerance = 5;
 const int servoMsPerCount = 5;
-const int gripperStartEncoderCount = 90;
-const int gripperEndEncoderCount = 225;
+const int gripperStartEncoderCount = 450;
+const int gripperEndEncoderCount = 90;
 const int stall = 10;
+const int gripperLockZone = 110;
 
+//remote 
+const int remotePin = 2;
 //romi bot constant 
-const float wheelPeremeter = 7 * PI;
-const float sonarOffSetDistance = 9.7;
+const float wheelDiameter = 7 * PI;
+const float sonarOffSetDistance = 5;
 const float effectiveApproachingRange = 30;
 const float carRadius = 7.62;
 const float sonarDistanceTolorance = 0.2;
