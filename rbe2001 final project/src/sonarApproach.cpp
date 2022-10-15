@@ -16,7 +16,7 @@ float sonarApproach:: getDistance(){
     //delay(5);
     distance = rangefinder.getDistance() - sonarOffSetDistance;
     Serial.println(distance);
-    if(distance < sonarDistanceTolorance) distance = 0;
+    if(distance < sonarDistanceTelorance) distance = 0;
     return distance;
 }
 
@@ -43,28 +43,28 @@ float sonarApproach:: getApproachingSpeed(float targetDistance, float maximumSpe
     }
     distance = getDistance();
     error = distance - targetDistance;
-    Serial.print("error: ");
+    //Serial.print("error: ");
     Serial.println(error);
     float speed = maximumSpeed * getFix(error,targetDistance);
     Serial.print("speed: ");
-    Serial.println(speed);
+    //Serial.println(speed);
     pError = error;
     return speed;
 }
 
 float sonarApproach:: getFix(float error,float target){
-    if(errorRange == 0) return 0;
-    Serial.print("error range");
-    Serial.println(errorRange);
+    if(errorRange - target < 0.1) return 0;
+    //Serial.print("error range");
+    //Serial.println(errorRange);
     float Pout = (float)error/(float)errorRange * Kp;
-    Serial.print("P out: ");
-    Serial.println(Pout);
+    //Serial.print("P out: ");
+    //Serial.println(Pout);
     float Dout = (float)(error - pError)/(float)errorRange * Kd;
-    Serial.println(" dError, D out: ");
-    Serial.println(error - pError);
-    Serial.println(Dout);
-    Serial.print("output");
-    Serial.println(Pout + Dout);
+    //Serial.println(" dError, D out: ");
+    //Serial.println(error - pError);
+    //Serial.println(Dout);
+    //Serial.print("output");
+    //Serial.println(Pout + Dout);
     float fix = Pout + Dout;
     if(fix * fix < 0.1 * 0.1){
         fix = 0;
@@ -74,9 +74,13 @@ float sonarApproach:: getFix(float error,float target){
 }
 
 float sonarApproach::getPerpotionalApproachingSpeed(float targetDistance, float maximumspeed){
-    error = rangefinder.getDistance() - targetDistance;
+    error = getDistance() - targetDistance;
     float Pout = error / targetDistance * Kp;
     float Dout = (error - pError) / targetDistance * Kd;
     pError = error;
     return maximumspeed * (Pout + Dout);
+}
+
+bool sonarApproach::haveDistance(float distance){
+    return abs(distance - getDistance()) < sonarDistanceTelorance + 0.1;
 }

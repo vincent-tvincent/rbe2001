@@ -51,7 +51,7 @@ void LineTrack::trackSetStart(){
 
 void LineTrack::trackFor(float speed,float distance){
     int start = (chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2;
-    int end = distance / wheelDiameter * encoderTickPerSecond;
+    int end = distance / wheelDiameter * encoderTickPerRevo;
     while((chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2 - start < end){
         track(speed);
     }
@@ -94,7 +94,7 @@ bool LineTrack::onTrack(int lADC, int rADC){
 }
 
 float LineTrack::getFix(){
-    error = ADC_R0 - ADC_L0;// get error 
+    error = (ADC_R0 - ADC_L0) * direction;// get error 
     if(error * error < lineTrackerADCTolorance * lineTrackerADCTolorance){error = 0;}
     float Pout = (error/1023) * Kp; // applying P control 
     float Dout = ((error - pError)/1023) * Kd;  // applying D control

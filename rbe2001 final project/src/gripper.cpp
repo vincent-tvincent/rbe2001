@@ -10,6 +10,8 @@ int gripper:: countToMs(int count){
 }
 void gripper:: init(){
     servo.setMinMaxMicroseconds(servoMin,servoMax);
+    release();
+    delay(50);
     close();
 }
 

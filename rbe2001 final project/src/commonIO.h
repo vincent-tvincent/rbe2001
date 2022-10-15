@@ -4,7 +4,6 @@
 #include <servo32u4.h>
 
 //line track
-const int encoderTickPerSecond = 1440;
 const int l0 = PIN_A3; 
 const int r0 = PIN_A2;
 const int l1 = -1;
@@ -23,9 +22,9 @@ static const int ENCB = 1;
 const int CPR = 540;
 const int motorEffort = 400;
 const int minMotorEffort = 200;
-const int lift45degEncoderRead = 4200;
+const int lift45degEncoderRead = 2650;
 const int lift25degEncoderRead = 4800;
-const int carryEncoderRead = 3000;
+const int carryEncoderRead = 5500;
 const int liftMax = 5000;
 const int liftStart = 0;
 const int startSensorPin = PIN_A1;
@@ -34,6 +33,7 @@ const int startOffset = -2500;
 //sonar 
 const int sonarEcho = 2;
 const int sonarTrig = 12;
+const float sonarDistanceTelorance = 0.2;
 
 //servo
 const int ServoPWM = 5;
@@ -44,7 +44,7 @@ const int servoErrorTolerance = 5;
 const int servoMsPerCount = 5;
 const int gripperStartEncoderCount = 450;
 const int gripperEndEncoderCount = 90;
-const int stall = 10;
+const int stall = 300;
 const int gripperLockZone = 110;
 
 //remote 
@@ -54,6 +54,6 @@ const float wheelDiameter = 7 * PI;
 const float sonarOffSetDistance = 5;
 const float effectiveApproachingRange = 30;
 const float carRadius = 7.62;
-const float sonarDistanceTolorance = 0.2;
+const int encoderTickPerRevo = 1440;
 
 #endif 
