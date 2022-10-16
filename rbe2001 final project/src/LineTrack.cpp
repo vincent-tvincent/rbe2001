@@ -34,24 +34,28 @@ void LineTrack:: upDateADC(){
 }
 
 void LineTrack::track(float speed){
+    float rightSpeed = 0;
+    float leftSpeed = 0;
     upDateADC();
     if(speed < 0){
-        chassis.setWheelSpeeds(speed,speed);
+        rightSpeed = speed * (1 - getFix());
+        leftSpeed = speed * (1 + getFix());
     }else{
-        //fix the speeds by the percentange of it self
-        float rightSpeed = speed * (1 + getFix());
-        float leftSpeed = speed * (1 - getFix());
-        chassis.setWheelSpeeds(rightSpeed,leftSpeed);
+        rightSpeed = speed * (1 + getFix());
+        leftSpeed = speed * (1 - getFix());
     }
+    chassis.setWheelSpeeds(rightSpeed,leftSpeed);
 }
 
 void LineTrack::trackSetStart(){
     start = (chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2;
-}
+}  
 
 void LineTrack::trackFor(float speed,float distance){
+    Serial.print("trackFor: ");
+    Serial.println(distance / wheelDiameter);
     int start = (chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2;
-    int end = distance / wheelDiameter * encoderTickPerRevo;
+    int end = distance / (wheelDiameter * 3.14) * encoderTickPerRevo;
     while((chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2 - start < end){
         track(speed);
     }
@@ -62,23 +66,21 @@ void LineTrack::stop(){
     chassis.setWheelSpeeds(0,0);
 }
 void LineTrack::switchTrack(float turnSpeed){
-   upDateADC();
-
+    Serial.println("switchTrack");
+    upDateADC();
     while(onTrack(ADC_L0,ADC_R0)) {
-        Serial.println("go out");
         chassis.setTwist(0,turnSpeed);
         upDateADC();
     }
     delay(100);
     while(!onTrack(ADC_L0,ADC_R0)){
-        Serial.println("go on");
         chassis.setTwist(0,turnSpeed);
         upDateADC();
     }
     chassis.setMotorEfforts(0,0);
 }
 
-bool LineTrack::isCross(){
+bool LineTrack::onCross(){
     upDateADC();
     return onTrack(ADC_L0,ADC_R0) && onTrack(ADC_L2,ADC_R2);
 }
@@ -89,7 +91,7 @@ bool LineTrack::onTrack(){
 }
 
 bool LineTrack::onTrack(int lADC, int rADC){
-    Serial.println(lADC >= LineADC && rADC >= LineADC);
+    // Serial.println(lADC >= LineADC && rADC >= LineADC);
     return lADC >= LineADC && rADC >= LineADC;
 }
 
@@ -106,7 +108,7 @@ void LineTrack::travel(float speed,int turnSpeed, int* map){
     int nextAction = 0;
     while(map[nextAction] != Stop){
         track(speed);
-        if(isCross()){
+        if(onCross()){
             stop();
             trackFor(speed,carRadius);
             stop();

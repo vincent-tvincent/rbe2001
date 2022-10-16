@@ -11,7 +11,7 @@ class LineTrack{
         bool track(float speed, float distance);
         void stop();
         void trackSetStart();
-        bool isCross(); // detect if go to the cross 
+        bool onCross(); // detect if go to the cross 
         bool onTrack(); // if the most inside pair of sensor on the line 
         void trackFor(float speed,float distance); // line track for distance 
         void turnBack(float turnSpeed); // turning back 

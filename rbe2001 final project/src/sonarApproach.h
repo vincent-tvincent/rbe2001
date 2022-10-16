@@ -10,7 +10,7 @@ class sonarApproach{
         float getPerpotionalApproachingSpeed(float targetDsitance,float maximumSpeed);
         float getDistance();// get distance which considered the offset length due to the position sonar monted
         float setStartDistance(); // get the distance when approaching start
-        bool haveDistance(float distance); // if have this distance
+        bool checkDistance(float distance); // if have this distance
     private: 
         //int offesetDistance = 0; // distance from the sonar to the frot of the romibot 
         int Kp;

@@ -233,7 +233,7 @@ void BlueMotor:: toStartPosition(int effort){
         setEffortWithoutDB(-effort);
         Serial.print(digitalRead(sensorPin));
         Serial.print(" ");
-        if(digitalRead(sensorPin)){
+        if(analogRead(sensorPin) > 1000){
             positiveCount ++;
         }else{
             positiveCount = 0;

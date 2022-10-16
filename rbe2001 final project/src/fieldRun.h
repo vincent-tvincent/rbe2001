@@ -4,7 +4,7 @@
 #include<gripper.h>
 #include<BlueMotor.h>
 #include<IRdecoder.h>
-void lift45degRoof();
+void lift45Roof();
 void lift25Roof();
 void pick();
 void tracking();
