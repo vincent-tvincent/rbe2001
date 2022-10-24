@@ -1,7 +1,6 @@
 #include <Romi32U4.h>
 #include <LineTrack.h>
 #include <sonarApproach.h>
-Chassis chassis;
 LineTrack Track(700,1,2);
 Rangefinder rangefinder(sonarEcho,sonarTrig);
 sonarApproach sonar(2.5,1.5);
@@ -52,6 +51,4 @@ void loop() {
     while(true);
     //Track.track(sonar.getApproachingSpeed(targetDistanceFromWall,speed));
   }
-  gripperRelease();
-  gripperClose();
 }

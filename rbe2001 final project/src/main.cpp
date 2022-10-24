@@ -8,12 +8,12 @@
 #include<sonarApproach.h>
 #include<RemoteConstants.h>
 //Servo32U4 servo;
-LineTrack Track(700,1.5,1.5); 
+LineTrack Track(700,1.5,2); 
 Chassis drive;
 BlueMotor motor;
 gripper Gripper(gripperStartEncoderCount,gripperEndEncoderCount);
-IRDecoder decoder(6);
-sonarApproach sonar(4,1);
+IRDecoder decoder(remotePin);
+sonarApproach sonar(2,2);
 Romi32U4ButtonA start;
 
 bool setupLiftingSystem = false;
@@ -32,13 +32,13 @@ void setup() {
   decoder.init();
   sonar.init();
 }
-int UnloadEncoderRead = 500;
-int lift45degEncoderRead = 2600;
-int lift25degEncoderRead = 3200;
-int carryEncoderRead = 5500;
-float roofOperationDsitance = 11;
-float platformOperationDsitance = 5;
-float stopDistance = 12.7;
+int UnloadEncoderRead = 1500;
+int lift45degEncoderRead = 2700;
+int lift25degEncoderRead = 3828;
+int carryEncoderRead =5500;
+float roofOperationDsitance = 15.5;
+float platformOperationDsitance = 7;
+float stopDistance = 20;
 float speed = 20;
 float turnSpeed = 90;
 float operationSpeed = 10;
@@ -74,7 +74,7 @@ void move(bool isClockWise){
     Track.track(approachingSpeed);
     if(Track.onCross()){
       Track.stop();
-      delay(1000);
+      delay(250);
       Track.trackFor(carRadius,speed);
       Track.switchTrack(Tspeed);
       Track.track(speed);
@@ -90,10 +90,10 @@ void lift(int degreeCount){
   motor.moveTo(degreeCount);
   Gripper.release();
   Track.trackFor(speed,1);
-  float approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,speed);
+  float approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,operationSpeed);
   while(approachingSpeed != 0){
       Track.track(approachingSpeed);
-      approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,speed);
+      approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,operationSpeed);
   }
   Track.stop();
   //gripping
@@ -101,64 +101,61 @@ void lift(int degreeCount){
     Gripper.closeTo(percent);
     delay(100);
   }
-  Gripper.close();
-  bool keepLift = true;
-  motor.moveTo(degreeCount + 1000);
-  while(keepLift){
-    Track.track(-operationSpeed);
-    Gripper.hold();
-    keepLift = motor.move(carryEncoderRead);
+  // bool unclosed = !Gripper.tryClose();
+  // while(unclosed){
+  //   Track.trackFor(speed,-2.5);
+  //   delay(200);
+  //   unclosed = !Gripper.tryClose();
+  // }
+  approachingSpeed =sonar.getApproachingSpeed(roofOperationDsitance - 5,operationSpeed);
+  bool move = true;
+  while(move || approachingSpeed != 0){
+    Gripper.close();
+    Track.track(approachingSpeed);
+    move = motor.move(degreeCount + 2000);
+    approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance - 5,operationSpeed);
   }
+  Track.stop();
+  approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance + 4,operationSpeed);
+  move = true;
+  while(abs(approachingSpeed) > 0.1 || move){
+    Gripper.hold();
+    Track.track(approachingSpeed);
+    move = motor.move(carryEncoderRead);
+    approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance + 4,operationSpeed);
+  }
+  Gripper.close();
   Track.stop();
 }
 
 //load from platform 
 
 void load(){
+  start.waitForButton();
   //approaching
-  motor.toStartPosition();
-  Gripper.closeTo(0.5);
-  float approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,speed);
+  motor.toStartPosition(motorEffort);
+  Gripper.closeTo(0.4);
+  float approachingSpeed = sonar.getApproachingSpeed(platformOperationDsitance,operationSpeed);
   while(approachingSpeed != 0){
       Track.track(approachingSpeed);
-      approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,speed);
+      approachingSpeed = sonar.getApproachingSpeed(platformOperationDsitance,operationSpeed);
   }
+  Track.stop();
   //gripping
   //1. grib
+  Gripper.release();
+
   for(float percent = 0; percent < 1; percent += 0.05){
     Gripper.closeTo(percent);
     delay(50);
   }
-  Gripper.close();
-  //2. pull
-  float pullDistance = roofOperationDsitance + 1;
-  approachingSpeed = sonar.getApproachingSpeed(pullDistance, speed);
-  while(approachingSpeed != 0){
-      Gripper.hold();
-      Track.track(approachingSpeed);
-      approachingSpeed = sonar.getApproachingSpeed(pullDistance, speed);
-  }
-  //3. grip again
-  //3a. release 
-  for(float percent = 1; percent > 0.5; percent -= 0.05){
-    Gripper.closeTo(percent);
-    delay(100);
-  }
-  //3b. push forward and regrip 
-  while(approachingSpeed != 0){
-      Track.track(approachingSpeed);
-      approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,operationSpeed);
-  }
-  for(float percent = 0; percent < 1; percent += 0.05){
-    Gripper.closeTo(percent);
-    delay(50);
-  }
+  Track.trackFor(operationSpeed,platformOperationDsitance - 1.5);
   Gripper.close();
   bool move = true;
   while(move){
     Gripper.hold();
     move = motor.move(carryEncoderRead);
-    Track.track(sonar.getApproachingSpeed(stopDistance,operationSpeed));
+    //Track.track(sonar.getApproachingSpeed(stopDistance,operationSpeed));
   }
   Track.stop();
 }
@@ -166,36 +163,72 @@ void load(){
 //put on roof
 void put(int degreeCount){
   motor.moveTo(carryEncoderRead);
-  Track.trackFor(speed,1);
-  float approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,speed);
-  while(approachingSpeed != 0){
+  //approaching 
+  bool move = true;
+  while(move){
+    Gripper.hold();
+    move = motor.move(carryEncoderRead);
+  }
+  float approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance - 5,operationSpeed);
+  while(abs(approachingSpeed) != 0){
       Gripper.hold();
       Track.track(approachingSpeed);
-      approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance,speed);
+      approachingSpeed = sonar.getApproachingSpeed(roofOperationDsitance - 5,operationSpeed);
   }
-  for(float percent = 1; percent > 0; percent -= 0.05){
+  Track.stop();
+  //placing 
+  for(float percent = 1; percent > 0.75; percent -= 0.025){
     Gripper.closeTo(percent);
     delay(100);
   }
-  Track.trackFor(-operationSpeed,2);
+  // chassis.setWheelSpeeds(speed,-speed);
+  // delay(100);
+  // chassis.setWheelSpeeds(-speed,speed);
+  // delay(200);
+  // chassis.setWheelSpeeds(speed,-speed);
+  // delay(100);
+  // chassis.setWheelSpeeds(0,0);
+  // move = true;
+  // while(move){
+  //   Gripper.hold();
+  //   move = motor.move(degreeCount);
+  // }
+  Track.trackFor(operationSpeed,-5);
+  for(float percent = 0.75; percent > 0.5; percent -= 0.025){
+    Gripper.closeTo(percent);
+    delay(100);
+  }
+  Track.trackFor(operationSpeed,-4);
+  for(float percent = 0.5; percent > 0; percent -= 0.025){
+    Gripper.closeTo(percent);
+    delay(100);
+  }
+  Gripper.release();
   Track.stop();
 }
 
 // unload to platform 
 void unload(){
   motor.moveTo(UnloadEncoderRead);
-  float approachingSpeed = sonar.getApproachingSpeed(platformOperationDsitance,speed); 
-  while(approachingSpeed != 0){
+  float approachingSpeed = sonar.getApproachingSpeed(platformOperationDsitance - 1,operationSpeed); 
+  while(approachingSpeed > 0.1){
       Gripper.hold();
       Track.track(approachingSpeed);
-      approachingSpeed = sonar.getApproachingSpeed(platformOperationDsitance,speed);
+      approachingSpeed = sonar.getApproachingSpeed(platformOperationDsitance - 1,operationSpeed);
   }
-  motor.toStartPosition();
-  for(float percent = 0; percent < 0.55; percent += 0.05){
+  Track.stop();
+  motor.toStartPosition(motorEffort);
+  for(float percent = 1; percent > 0.25; percent -= 0.025){
+    Gripper.closeTo(percent);
+    delay(250);
+  }
+  Track.trackFor(operationSpeed,4);
+  Track.trackFor(operationSpeed, -platformOperationDsitance/2);
+  for(float percent = 0.25; percent > 0; percent -= 0.025){
     Gripper.closeTo(percent);
     delay(100);
   }
-  Track.trackFor(-speed,5);
+  Track.trackFor(operationSpeed,-stopDistance);
   Gripper.close();
   Track.stop();
 }
@@ -207,39 +240,29 @@ void shift(){
 
 
 
-
-
-bool runTask = false;
+bool runOnce =  true;
+bool runTask = true;
+bool cond1 = true;
 void loop(){
-    Track.track(speed);
-    if(Track.onCross()){
-      Track.stop();
-      delay(1000);
-      Track.trackFor(carRadius,speed);
-      delay(1000);
-      Track.switchTrack(turnSpeed);
-      Track.track(speed);
-    }
-
-    
+    //Serial.println(sonar.getDistance());
     if(runTask){
-    int next = roofToStart45;
+    int next = lift25;
     while(next != end){
       if(next == startToRoof45 || next == roofToStart25){
         move(true);
-        next = end;
+        next = putPlatform;
       }else if(next == startToRoof25 || next == roofToStart45){
         move(false);
-        next = end;
+        next = put25;
       }else if(next == lift45){
         lift(lift45degEncoderRead);
         next = end;
       }else if(next == lift25){
         lift(lift25degEncoderRead);
-        next = end;
+        next = roofToStart25;
       }else if(next == liftPlatform){
         load();
-        next = end;
+        next = startToRoof25;
       }else if(next == put45){
         put(lift45degEncoderRead);
         next = end;
@@ -248,56 +271,11 @@ void loop(){
         next = end;
       }else if(next == putPlatform){
         unload();
-        next = end;
+        next = liftPlatform;
       }else{
         next = end;
       }     
     }
   }
-   // delay(2000);
-  // float sampleDistance = 8;
-  // Serial.println("start: \n");
-  // Serial.print("distance");
-  // Serial.println(",speed, ");
-  // float approachingSpeed = sonar.getApproachingSpeed(sampleDistance,20);    
-  // float Distance = sonar.getDistance();
-  // while(approachingSpeed != 0){
-  //   approachingSpeed = sonar.getApproachingSpeed(sampleDistance,20);
-  //   Distance =sonar.getDistance();
-  //   Serial.print(Distance);
-  //   Serial.print(",");
-  //   Serial.print(approachingSpeed);
-  //   Serial.println(",");
-  //   delay(250);
-  // }
-  //Track.switchTrack(-turnSpeed);
-  // while(sonar.getDistance() > roofOperationDsitance){
-  //   Track.track(sonar.getApproachingSpeed(roofOperationDsitance,speed));
-  // }
-  // Track.stop();
-  // Gripper.closeTo(1);
-  // while(sonar.getDistance() < 2.5 + roofOperationDsitance){
-  //   Gripper.hold();
-  //   Track.track(-operationSpeed);
-  // }
-  // Track.stop();
-  // delay(1000);
-  // Gripper.closeTo(0.4);
-  // delay(1000);
-  // Track.trackFor(speed,2.5);
-  // Gripper.closeTo(1);
-  // bool keepMove = true;
-  // while(keepMove){
-  //   keepMove = motor.move(carryEncoderRead);
-  //   Gripper.hold();
-  // }
-  // delay(1000);
-  // while(sonar.getDistance() <= roofOperationDsitance){
-  //     Track.track(-speed);
-  // }
-  // Track.stop();
-  // delay(1000);
-  // Track.switchTrack(turnSpeed);
-  // Track.trackFor(speed,5);
-  // while(true);
+  while(runOnce);
 };

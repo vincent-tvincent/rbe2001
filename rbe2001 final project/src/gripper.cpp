@@ -66,3 +66,30 @@ void gripper:: closeTo(float percent){
     int writeValue = countToMs(start + (float)travelLength * percent);
     servo.writeMicroseconds(writeValue);
 }
+
+bool gripper:: tryClose(){
+    int stallCount = 0;
+    servo.writeMicroseconds(countToMs(gripperEndEncoderCount));
+    delay(50);
+    bool incomplete = abs(gripperEndEncoderCount - analogRead(servoEncoder)) > gripperLockZone;
+    Serial.println(analogRead(servoEncoder));
+    for(stallCount = 0; stallCount <  stall + 1 && incomplete; stallCount++){
+        stallCount++;
+        Serial.println("retry");
+        servo.writeMicroseconds(countToMs(gripperEndEncoderCount));
+        delay(50);
+        Serial.println(analogRead(servoEncoder));
+        incomplete = abs(gripperEndEncoderCount - analogRead(servoEncoder)) > gripperLockZone;
+    }
+    if(stallCount > stall){
+        release();
+        delay(1000);
+        return false;
+    }else{
+        return true;
+    }
+    Serial.print("stall count: ");
+    Serial.println(stallCount);
+    Serial.print("incomplete: ");
+    Serial.println(incomplete);
+}

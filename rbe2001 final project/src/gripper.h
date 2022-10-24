@@ -8,6 +8,7 @@ class gripper{
     void init();
     void release();
     void close();
+    bool tryClose();
     void closeTo(float percent);
     void hold();
     private: 

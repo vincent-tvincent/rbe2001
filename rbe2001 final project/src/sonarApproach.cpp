@@ -80,8 +80,10 @@ float sonarApproach::getPerpotionalApproachingSpeed(float targetDistance, float 
     error = getDistance() - targetDistance;
     float Pout = error * Kp / targetDistance;
     float Dout = (error - pError) / targetDistance * Kd;
+    float output = Pout + Dout;
+    if(output > 1) output = 1;
     pError = error;
-    return maximumspeed * (Pout + Dout);
+    return output;
 }
 
 bool sonarApproach::checkDistance(float distance){

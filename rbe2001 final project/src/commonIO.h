@@ -39,13 +39,13 @@ const int servoMax = 2500;
 const int servoEncoder = PIN_A0;
 const int servoErrorTolerance = 5;
 const int servoMsPerCount = 5;
-const int gripperStartEncoderCount = 475;
-const int gripperEndEncoderCount = 90;
+const int gripperStartEncoderCount = 400;
+const int gripperEndEncoderCount = 30;
 const int stall = 100;
 const int gripperLockZone = 110;
 
 //remote 
-const int remotePin = 2;
+const int remotePin = 14;
 //romi bot constant 
 const float wheelDiameter = 7 * PI;
 const float sonarOffSetDistance = 0;

@@ -1,5 +1,5 @@
 #include "LineTrack.h"
-
+Chassis chassis;
 LineTrack::LineTrack(int lineADC, float kp, float kd){
     direction = 1;
     LineADC = lineADC; 
@@ -54,10 +54,12 @@ void LineTrack::trackFor(float speed,float distance){
 void LineTrack::switchTrack(float turnSpeed){
    upDateADC();
     while(onTrack(ADC_L0,ADC_R0)) {
+        Serial.println("go out");
         chassis.setTwist(0,turnSpeed);
         upDateADC();
     } 
     while(!onTrack(ADC_L0,ADC_R0)){
+        Serial.println("go on");
         chassis.setTwist(0,turnSpeed);
         upDateADC();
     }

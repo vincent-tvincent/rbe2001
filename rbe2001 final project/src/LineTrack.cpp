@@ -37,12 +37,12 @@ void LineTrack::track(float speed){
     float rightSpeed = 0;
     float leftSpeed = 0;
     upDateADC();
-    if(speed < 0){
-        rightSpeed = speed * (1 - getFix());
-        leftSpeed = speed * (1 + getFix());
-    }else{
+    if(speed > 0){
         rightSpeed = speed * (1 + getFix());
         leftSpeed = speed * (1 - getFix());
+    }else{
+        rightSpeed = speed * (1 - getFix());
+        leftSpeed = speed * (1 + getFix());
     }
     chassis.setWheelSpeeds(rightSpeed,leftSpeed);
 }
@@ -52,11 +52,11 @@ void LineTrack::trackSetStart(){
 }  
 
 void LineTrack::trackFor(float speed,float distance){
+    if(distance < 0) speed = -speed;
     Serial.print("trackFor: ");
-    Serial.println(distance / wheelDiameter);
     int start = (chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2;
     int end = distance / (wheelDiameter * 3.14) * encoderTickPerRevo;
-    while((chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2 - start < end){
+    while(abs((chassis.getLeftEncoderCount() + chassis.getRightEncoderCount())/2 - start) < abs(end)){
         track(speed);
     }
     chassis.setWheelSpeeds(0,0);
@@ -96,7 +96,8 @@ bool LineTrack::onTrack(int lADC, int rADC){
 }
 
 float LineTrack::getFix(){
-    error = (ADC_R0 - ADC_L0) * direction;// get error 
+    error = ADC_R0 - ADC_L0;// get error 
+    Serial.println(error);
     if(error * error < lineTrackerADCTolorance * lineTrackerADCTolorance){error = 0;}
     float Pout = (error/1023) * Kp; // applying P control 
     float Dout = ((error - pError)/1023) * Kd;  // applying D control
